@@ -1,14 +1,23 @@
 package com.example.lab3;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
+
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.TextView;
+
+
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -17,34 +26,36 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.MalformedURLException;
+
 import java.net.URL;
-import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.TimeZone;
+
 
 
 public class MainActivity extends AppCompatActivity {
 
     private static final DecimalFormat var_decimal_covert = new DecimalFormat("0.00");
     Button btn1;
-    EditText  city ;
-    TextView desc , temp,feel_like,max_temp,min_temp,humidity,visibility,wind_speed,wind_dir,sunrise,sunset;
-    String description ;
-    Double var_temp, var_feel_like, var_max_temp, var_min_temp,var_humidity, var_visibility, var_wind_speed, var_wind_dir;
+    EditText city;
+    TextView desc, temp, feel_like, max_temp, min_temp, humidity, visibility, wind_speed, wind_dir, sunrise, sunset ,Latitude,Longitude;
+    String description;
+    Double var_temp, var_feel_like, var_max_temp, var_min_temp, var_humidity, var_visibility, var_wind_speed, var_wind_dir;
     long var_sunrise_time, var_sunset_time;
+    String cityName;
 
-    public  String date_change  (long t )
-    {
-        Date date = new Date(t*1000L);
-        SimpleDateFormat jvar_decimal_covert = new SimpleDateFormat( "hh:mm:ss:aaa");
+    int permisisonCode = 0;
+    double longi;
+    double lati;
+
+    public String date_change(long t) {
+        Date date = new Date(t * 1000L);
+        SimpleDateFormat jvar_decimal_covert = new SimpleDateFormat("hh:mm:ss:aaa");
         String java_date = jvar_decimal_covert.format(date);
         return (java_date);
 
     }
-
 
 
     @Override
@@ -52,8 +63,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
-        btn1 = (Button)findViewById(R.id.button);
+        btn1 = (Button) findViewById(R.id.button);
         city = (EditText) findViewById(R.id.editText_cityname);
         desc = findViewById(R.id.textView_discription);
         temp = findViewById(R.id.textView_temp);
@@ -66,34 +76,75 @@ public class MainActivity extends AppCompatActivity {
         wind_dir = findViewById(R.id.textView_winddir);
         sunrise = findViewById(R.id.textView_sunrise);
         sunset = findViewById(R.id.textView_sunset);
-   btn1.setOnClickListener(new View.OnClickListener() {
+        Longitude= findViewById(R.id.textView_Latitude);
+        Latitude= findViewById(R.id.textView_Longitude);
+
+
+        city.setEnabled(false);
+
+
+        int a = ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION);
+        int b = ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION);
+
+        if (a != PackageManager.PERMISSION_GRANTED && b != PackageManager.PERMISSION_GRANTED) {
+            String[] thepermissions = new String[1];
+            thepermissions[0] = android.Manifest.permission.ACCESS_FINE_LOCATION;
+            MainActivity.this.requestPermissions(thepermissions, permisisonCode);
+            //return;
+        }
+        LocationManager lm;
+        lm = (LocationManager) getSystemService(LOCATION_SERVICE);
+
+        Location loc = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        Log.d("*****", "*******Last Known LOCATION:" + loc.getLatitude() + "," + loc.getLongitude());
+
+        lati = loc.getLatitude();
+        longi = loc.getLongitude();
+
+        lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 1, new LocationListener() {
+            @Override
+            public void onLocationChanged(@NonNull Location location) {
+                lati = location.getLatitude();
+                longi = location.getLongitude();
+
+
+            }
+        });
+
+
+        btn1.setOnClickListener(new View.OnClickListener() {
 
 
             @Override
             public void onClick(View view) {
 
+                lati = loc.getLatitude();
+                longi = loc.getLongitude();
+
                 Runnable r = new Runnable() {
                     @Override
                     public void run() {
                         try {
-                            char[] buffer= new char[100000];
+
+                            char[] buffer = new char[100000];
                             URL u = null;
                             BufferedReader br;
                             int count = 0;
-                            String s_city = city.getText().toString();
-
-                            u = new URL("https://api.openweathermap.org/data/2.5/weather?q=+"+s_city+"&appid=0a709485bd666a983e6a18e309411e4c");
+                          //  https://api.openweathermap.org/data/2.5/weather?lat=33.44&lon=-94.04&appid=
+                            u = new URL("https://api.openweathermap.org/data/2.5/weather?lat=" + lati + "&lon="+ longi+"&appid=0a709485bd666a983e6a18e309411e4c");
                             br = new BufferedReader(new InputStreamReader(u.openStream()));
                             count = br.read(buffer);
-                            String s = new String(buffer,0,count);
+                            String s = new String(buffer, 0, count);
 
                             JSONObject j = new JSONObject(s);
+
+                            cityName = j.getString("name");
                             JSONArray jsonarray = j.getJSONArray("weather");
-                            JSONObject descrip =  jsonarray.getJSONObject(0);
+                            JSONObject descrip = jsonarray.getJSONObject(0);
                             JSONObject main = j.getJSONObject("main");
                             JSONObject wind = j.getJSONObject("wind");
                             JSONObject sys = j.getJSONObject("sys");
-                            description  =descrip.getString("main");
+                            description = descrip.getString("main");
                             var_temp = main.getDouble("temp");
                             var_feel_like = main.getDouble("feels_like");
                             var_max_temp = main.getDouble("temp_max");
@@ -104,35 +155,38 @@ public class MainActivity extends AppCompatActivity {
                             var_wind_dir = wind.getDouble("deg");
                             var_sunrise_time = sys.getLong("sunrise");
                             var_sunset_time = sys.getLong("sunset");
-                            var_temp=var_temp-273.15;
-                            var_feel_like=var_feel_like-273.15;
-                            var_max_temp=var_max_temp-273.15;
-                            var_min_temp=var_min_temp-273.15;
-                            var_visibility=var_visibility/1000;
+                            cityName= cityName+","+ sys.getString("country");
+                            var_temp = var_temp - 273.15;
+                            var_feel_like = var_feel_like - 273.15;
+                            var_max_temp = var_max_temp - 273.15;
+                            var_min_temp = var_min_temp - 273.15;
+                            var_visibility = var_visibility / 1000;
                             runOnUiThread(new Runnable() {
                                 @Override
 
                                 public void run() {
 
-
+                                    Latitude.setText(""+var_decimal_covert.format(lati));
+                                    Longitude.setText(""+var_decimal_covert.format(longi));
                                     desc.setText(description);
-                                    temp.setText(""+var_decimal_covert.format(var_temp)+"°C");
-                                    feel_like.setText(""+var_decimal_covert.format(var_feel_like)+"°C");
-                                    max_temp.setText(""+var_decimal_covert.format(var_max_temp)+"°C");
-                                    min_temp.setText(""+var_decimal_covert.format(var_min_temp)+"°C");
-                                    humidity.setText(""+var_humidity+"%");
-                                    visibility.setText(var_visibility+"km");
-                                    wind_speed.setText(""+var_wind_speed+"m/s");
-                                    wind_dir.setText(""+var_wind_dir);
-                                    sunrise.setText(""+date_change(var_sunrise_time));
-                                    sunset.setText(""+date_change(var_sunset_time));
+                                    temp.setText("" + var_decimal_covert.format(var_temp) + "°C");
+                                    feel_like.setText("" + var_decimal_covert.format(var_feel_like) + "°C");
+                                    max_temp.setText("" + var_decimal_covert.format(var_max_temp) + "°C");
+                                    min_temp.setText("" + var_decimal_covert.format(var_min_temp) + "°C");
+                                    humidity.setText("" + var_humidity + "%");
+                                    visibility.setText(var_visibility + "km");
+                                    wind_speed.setText("" + var_wind_speed + "m/s");
+                                    wind_dir.setText("" + var_wind_dir);
+                                    sunrise.setText("" + date_change(var_sunrise_time));
+                                    sunset.setText("" + date_change(var_sunset_time));
+                                    city.setText(cityName);
+
                                 }
                             });
 
                         } catch (Exception e) {
                             e.getStackTrace();
                         }
-
                     }
                 };
                 Thread t = new Thread(r);
@@ -142,5 +196,4 @@ public class MainActivity extends AppCompatActivity {
         });
 
     }
-
 }
