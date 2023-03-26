@@ -18,6 +18,7 @@ import android.widget.TextView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -45,10 +46,11 @@ public class MainActivity extends AppCompatActivity {
     long var_sunrise_time, var_sunset_time;
     String cityName;
 
-    int permisisonCode = 0;
+    int permisisonCode = 999999;
     double longi;
     double lati;
 
+    Location loc=null;
     public String date_change(long t) {
         Date date = new Date(t * 1000L);
         SimpleDateFormat jvar_decimal_covert = new SimpleDateFormat("hh:mm:ss:aaa");
@@ -86,22 +88,46 @@ public class MainActivity extends AppCompatActivity {
         int a = ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION);
         int b = ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION);
 
-        if (a != PackageManager.PERMISSION_GRANTED && b != PackageManager.PERMISSION_GRANTED) {
-            String[] thepermissions = new String[1];
-            thepermissions[0] = android.Manifest.permission.ACCESS_FINE_LOCATION;
-            MainActivity.this.requestPermissions(thepermissions, permisisonCode);
-            //return;
+        try {
+            if (a != PackageManager.PERMISSION_GRANTED && b != PackageManager.PERMISSION_GRANTED) {
+                String[] thepermissions = new String[1];
+                thepermissions[0] = android.Manifest.permission.ACCESS_FINE_LOCATION;
+                MainActivity.this.requestPermissions(thepermissions, permisisonCode);
+
+            }
         }
+
+        catch (Exception e )
+        {
+            e.getStackTrace();
+        }
+
         LocationManager lm;
+
         lm = (LocationManager) getSystemService(LOCATION_SERVICE);
 
-        Location loc = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-        Log.d("*****", "*******Last Known LOCATION:" + loc.getLatitude() + "," + loc.getLongitude());
+
+
+        Location networkLocation = lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+        Location gpsLocation = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+
+        if (gpsLocation != null) {
+
+            loc = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            Toast.makeText(MainActivity.this, "GPS availible", Toast.LENGTH_SHORT).show();
+
+
+
+        } else if (networkLocation != null) {
+            loc = lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            Toast.makeText(MainActivity.this, "Network provider avaivible", Toast.LENGTH_SHORT).show();
+
+        }
 
         lati = loc.getLatitude();
         longi = loc.getLongitude();
 
-        lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 1, new LocationListener() {
+        lm.requestLocationUpdates(loc.getProvider(), 1000, 1, new LocationListener() {
             @Override
             public void onLocationChanged(@NonNull Location location) {
                 lati = location.getLatitude();
