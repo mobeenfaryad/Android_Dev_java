@@ -1,5 +1,6 @@
 package com.example.assign_2;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
@@ -17,6 +18,18 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.ads.AdError;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.FullScreenContentCallback;
+import com.google.android.gms.ads.LoadAdError;
+import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.appopen.AppOpenAd;
+import com.google.android.gms.ads.initialization.InitializationStatus;
+import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
+import com.google.android.gms.ads.interstitial.InterstitialAd;
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -25,15 +38,39 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
+
+
+
 public class MainActivity extends AppCompatActivity {
 
 
+    private AppOpenAd mappOpenAd;
+
     int count ;
+
+
+    private AdView mAdView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
+        mAdView = findViewById(R.id.adView);
+        AdRequest adRequest1 = new AdRequest.Builder().build();
+        mAdView.loadAd(adRequest1);
+
+        AdRequest request = new AdRequest.Builder().build();
+        AppOpenAd.load(
+                this, "ca-app-pub-5735037368102204/8130150117", request, new AppOpenAd.AppOpenAdLoadCallback() {
+
+                    @Override
+                    public void onAdLoaded(@NonNull AppOpenAd appOpenAd) {
+                        mappOpenAd = appOpenAd;
+                        mappOpenAd.show(MainActivity.this);
+                    }
+                });
     }
 
     @Override
@@ -41,7 +78,17 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         File root = getFilesDir();
         File[] files = root.listFiles();
+
         count = files.length; // to get all total number of files
+
+
+        for(int i=0;i<count;i++)
+        {
+            Log.d ( "file ", files[i].getAbsolutePath());
+
+        }
+
+
 
         LinearLayout l = findViewById(R.id.layoutll);
 
@@ -85,6 +132,7 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
             tvs[i].setId(i);
+            tvs[i].setMaxLines(1);
             tvs[i].setText(txt);
             tvs[i].setPadding(100,100,100,100);
 
@@ -105,7 +153,7 @@ public class MainActivity extends AppCompatActivity {
                         Intent i= new Intent(MainActivity.this, delete_show.class);
                         i.putExtra("Index", s);
                         startActivity(i);
-                    }
+                }
                     catch (Exception e )
                     {
                         e.getStackTrace();
@@ -126,4 +174,6 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout l = findViewById(R.id.layoutll);
         l.removeAllViews();
     }
+
+
 }

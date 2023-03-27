@@ -1,5 +1,6 @@
 package com.example.assign_2;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
@@ -11,6 +12,15 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.LoadAdError;
+import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.initialization.InitializationStatus;
+import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
+import com.google.android.gms.ads.interstitial.InterstitialAd;
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -20,6 +30,8 @@ import java.io.InputStreamReader;
 
 public class delete_show extends AppCompatActivity {
 
+    private AdView mAdView;
+    private InterstitialAd mInterstitialAd;
     String txt="";
     FileInputStream fis;
     BufferedReader br;
@@ -31,6 +43,21 @@ public class delete_show extends AppCompatActivity {
         Button btn_delete = findViewById(R.id.btn_delete);
         EditText text = findViewById(R.id.edittext);
         Button btn_edit =findViewById(R.id.btn_edit);
+
+        //Banner ad
+        mAdView = findViewById(R.id.adView);
+        AdRequest adRequest1 = new AdRequest.Builder().build();
+        mAdView.loadAd(adRequest1);
+
+        AdRequest adRequest = new AdRequest.Builder().build();
+        InterstitialAd.load(this,"ca-app-pub-5735037368102204/9062004122", adRequest,
+                new InterstitialAdLoadCallback() {
+                    @Override
+                    public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {
+                        mInterstitialAd = interstitialAd;
+                        mInterstitialAd.show(delete_show.this);
+                    }
+                });
 
         File root = getFilesDir();
         File[] files = root.listFiles();
@@ -112,6 +139,7 @@ public class delete_show extends AppCompatActivity {
                      t= text.getText().toString();
                          fout.write(t.getBytes());
                          fout.close();
+                         finish();
                  }
                  catch (Exception e)
                  {
